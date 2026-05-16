@@ -69,6 +69,10 @@ services:
       API_DOMAIN: ${API_DOMAIN}
       WEBSITE_DOMAIN: ${WEBSITE_DOMAIN}
       APP_NAME: ${APP_NAME}
+      SMTP_HOST: ${SMTP_HOST}
+      SMTP_PORT: ${SMTP_PORT}
+      SMTP_USER: ${SMTP_USER}
+      SMTP_PASSWORD: ${SMTP_PASSWORD}
     networks:
       - st_network
 

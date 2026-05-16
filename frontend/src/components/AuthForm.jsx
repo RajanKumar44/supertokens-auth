@@ -53,12 +53,19 @@ function AuthForm({ mode = "login" }) {
         setError("Sign up is not allowed. Please contact support.");
       } else if (response.status === "OK") {
         if (isLogin) {
-          navigate("/dashboard", { replace: true });
+          // Check if email is verified before going to dashboard
+          const { isEmailVerified } = await import("supertokens-auth-react/recipe/emailverification");
+          const verificationResponse = await isEmailVerified();
+          if (verificationResponse.isVerified) {
+            navigate("/dashboard", { replace: true });
+          } else {
+            // Email not verified — send them to verify
+            window.location.href = "/auth/verify-email";
+          }
         } else {
-          // After signup, redirect to dashboard.
-          // If email verification is REQUIRED, SuperTokens will
-          // automatically redirect to the verification page.
-          navigate("/dashboard", { replace: true });
+          // After signup, always go to email verification page
+          // SuperTokens will automatically send the verification email
+          window.location.href = "/auth/verify-email";
         }
       } else {
         setError("Something went wrong. Please try again.");
@@ -159,6 +166,13 @@ function AuthForm({ mode = "login" }) {
           </div>
           {!isLogin && (
             <p className="form-hint">Min 8 characters. Stored as BCrypt hash.</p>
+          )}
+          {isLogin && (
+            <div className="forgot-password-wrapper">
+              <Link to="/forgot-password" className="forgot-password-link" id="forgot-password-link">
+                Forgot password?
+              </Link>
+            </div>
           )}
         </div>
 

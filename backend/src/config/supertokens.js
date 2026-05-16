@@ -3,6 +3,8 @@ const Session = require("supertokens-node/recipe/session");
 const EmailPassword = require("supertokens-node/recipe/emailpassword");
 const EmailVerification = require("supertokens-node/recipe/emailverification");
 const Dashboard = require("supertokens-node/recipe/dashboard");
+const { SMTPService: EmailVerificationSMTPService } = require("supertokens-node/recipe/emailverification/emaildelivery");
+const { SMTPService: EmailPasswordSMTPService } = require("supertokens-node/recipe/emailpassword/emaildelivery");
 
 /**
  * Initialize SuperTokens with EmailPassword + EmailVerification recipes.
@@ -12,10 +14,39 @@ const Dashboard = require("supertokens-node/recipe/dashboard");
  *   Passwords are NEVER stored in plaintext.
  *
  * Email Verification:
- *   After signup, the user receives a verification email.
+ *   After signup, the user receives a REAL verification email via SMTP.
  *   The "REQUIRED" mode blocks access until the email is verified.
+ *
+ * SMTP Configuration:
+ *   Uses Gmail SMTP (or any SMTP provider) to send real emails.
+ *   Credentials are read from environment variables.
  */
+
+// ─── SMTP Settings (shared by EmailVerification & EmailPassword) ───
+function getSmtpSettings() {
+  return {
+    host: process.env.SMTP_HOST || "smtp.gmail.com",
+    port: parseInt(process.env.SMTP_PORT || "465"),
+    secure: true,
+    authUsername: process.env.SMTP_USER,
+    password: process.env.SMTP_PASSWORD,
+    from: {
+      name: process.env.APP_NAME || "SuperTokens Auth App",
+      email: process.env.SMTP_USER,
+    },
+  };
+}
+
 function initSuperTokens() {
+  const smtpSettings = getSmtpSettings();
+  const hasSmtp = smtpSettings.authUsername && smtpSettings.password;
+
+  if (hasSmtp) {
+    console.log(`📧 SMTP configured — real emails will be sent via ${smtpSettings.host}`);
+  } else {
+    console.log("⚠️  SMTP not configured — verification emails will be logged to console only");
+  }
+
   supertokens.init({
     framework: "express",
     supertokens: {
@@ -32,6 +63,31 @@ function initSuperTokens() {
     },
     recipeList: [
       EmailPassword.init({
+        // If SMTP is configured, use it for password reset emails too
+        ...(hasSmtp && {
+          emailDelivery: {
+            service: new EmailPasswordSMTPService({
+              smtpSettings,
+            }),
+            override: (originalImplementation) => {
+              return {
+                ...originalImplementation,
+                sendEmail: async function (input) {
+                  if (input.type === "PASSWORD_RESET") {
+                    // Replace the default SuperTokens reset URL with our custom page
+                    const websiteDomain = process.env.WEBSITE_DOMAIN || "http://localhost:3001";
+                    input.passwordResetLink = input.passwordResetLink.replace(
+                      /http[s]?:\/\/[^/]*\/auth\/reset-password/,
+                      `${websiteDomain}/reset-password`
+                    );
+                    console.log(`🔑 Password reset email sent to: ${input.user.email}`);
+                  }
+                  return originalImplementation.sendEmail(input);
+                },
+              };
+            },
+          },
+        }),
         override: {
           apis: (originalImplementation) => {
             return {
@@ -76,9 +132,16 @@ function initSuperTokens() {
 
       // Email Verification — users must verify their email after signup.
       // Mode "REQUIRED" = user cannot access protected routes until verified.
-      // Mode "OPTIONAL" = user can access routes but you can check verification status.
+      // Uses SMTP to send real verification emails to the user's inbox.
       EmailVerification.init({
         mode: "REQUIRED",
+        ...(hasSmtp && {
+          emailDelivery: {
+            service: new EmailVerificationSMTPService({
+              smtpSettings,
+            }),
+          },
+        }),
       }),
 
       Session.init({

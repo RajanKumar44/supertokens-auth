@@ -1,10 +1,12 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Session from "supertokens-auth-react/recipe/session";
+import { isEmailVerified } from "supertokens-auth-react/recipe/emailverification";
 
 /**
- * ProtectedRoute wrapper — checks for an active SuperTokens session.
- * Redirects to /login if not authenticated.
+ * ProtectedRoute wrapper — checks for an active SuperTokens session
+ * AND verified email. Redirects to /login if not authenticated,
+ * or to /auth/verify-email if email is not verified.
  */
 function ProtectedRoute({ children }) {
   const navigate = useNavigate();
@@ -15,11 +17,20 @@ function ProtectedRoute({ children }) {
     async function checkAuth() {
       try {
         const exists = await Session.doesSessionExist();
-        if (exists) {
-          setIsAuthenticated(true);
-        } else {
+        if (!exists) {
           navigate("/login", { replace: true });
+          return;
         }
+
+        // Session exists — now check if email is verified
+        const verificationResponse = await isEmailVerified();
+        if (!verificationResponse.isVerified) {
+          // Email not verified — redirect to verification page
+          window.location.href = "/auth/verify-email";
+          return;
+        }
+
+        setIsAuthenticated(true);
       } catch (err) {
         console.error("Session check failed:", err);
         navigate("/login", { replace: true });
@@ -55,3 +66,4 @@ function ProtectedRoute({ children }) {
 }
 
 export default ProtectedRoute;
+

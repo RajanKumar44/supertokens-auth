@@ -130,6 +130,24 @@
   color: var(--color-text-muted);
 }
 
+/* ─── Forgot Password ───────────────────────────── */
+.forgot-password-wrapper {
+  text-align: right;
+  margin-top: 2px;
+}
+
+.forgot-password-link {
+  font-size: var(--font-size-xs);
+  color: var(--color-accent);
+  font-weight: 500;
+  text-decoration: none;
+}
+
+.forgot-password-link:hover {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
 /* ─── Error ──────────────────────────────────────── */
 .form-error {
   display: flex;
