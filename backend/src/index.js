@@ -45,6 +45,22 @@ app.use(
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+// ─── Rate Limiting (must come BEFORE SuperTokens middleware) ───
+const {
+  emailVerificationLimiter,
+  signupLimiter,
+  loginLimiter,
+  passwordResetLimiter,
+} = require("./middlewares/rateLimiter");
+
+// Apply rate limits to specific auth endpoints
+app.use("/auth/user/email/verify/token", emailVerificationLimiter);
+app.use("/auth/signup", signupLimiter);
+app.use("/auth/signin", loginLimiter);
+app.use("/auth/user/password/reset/token", passwordResetLimiter);
+
+console.log("🛡️  Rate limiting enabled on auth endpoints");
+
 // ─── SuperTokens Middleware (exposes /auth/* endpoints) ────────
 app.use(stMiddleware());
 

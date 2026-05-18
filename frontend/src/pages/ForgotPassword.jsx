@@ -35,7 +35,11 @@ function ForgotPassword() {
       }
     } catch (err) {
       console.error("Password reset error:", err);
-      setError("Network error. Please check your connection.");
+      if (err?.status === 429 || err?.message?.includes("429")) {
+        setError("⏳ Too many attempts! You have exceeded the limit of 5 password reset requests. Please wait 15 minutes before trying again.");
+      } else {
+        setError("Network error. Please check your connection.");
+      }
     } finally {
       setIsSubmitting(false);
     }

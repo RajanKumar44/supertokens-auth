@@ -72,7 +72,12 @@ function AuthForm({ mode = "login" }) {
       }
     } catch (err) {
       console.error("Auth error:", err);
-      setError("Network error. Please check your connection.");
+      // Check if it's a rate limit error (429)
+      if (err?.status === 429 || err?.message?.includes("429")) {
+        setError("⏳ Too many attempts! You have exceeded the limit of 10 requests. Please wait 15 minutes before trying again.");
+      } else {
+        setError("Network error. Please check your connection.");
+      }
     } finally {
       setIsSubmitting(false);
     }
