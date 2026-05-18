@@ -67,9 +67,11 @@ app.use(stMiddleware());
 // ─── Custom Routes ─────────────────────────────────────────────
 const authRoutes = require("./routes/auth.routes");
 const userRoutes = require("./routes/user.routes");
+const jwtRoutes = require("./routes/jwt.routes");
 
 app.use("/auth", authRoutes);
 app.use("/api/users", userRoutes);
+app.use("/api/jwt", jwtRoutes);
 
 // ─── Health Check ──────────────────────────────────────────────
 app.get("/health", (req, res) => {

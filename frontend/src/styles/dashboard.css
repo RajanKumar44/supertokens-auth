@@ -208,6 +208,38 @@
   color: var(--color-success);
 }
 
+.badge-purple {
+  background: rgba(168, 85, 247, 0.1);
+  color: #a855f7;
+}
+
+/* ─── JWT Section ────────────────────────────────── */
+.card-icon-amber {
+  background: rgba(245, 158, 11, 0.1);
+  color: #f59e0b;
+}
+
+.jwt-section {
+  padding-bottom: var(--space-md);
+  margin-bottom: var(--space-md);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.jwt-section:last-child {
+  border-bottom: none;
+  margin-bottom: 0;
+  padding-bottom: 0;
+}
+
+.jwt-section-title {
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--color-text-muted);
+  margin-bottom: var(--space-sm);
+}
+
 /* ─── Tech Stack ─────────────────────────────────── */
 .tech-stack {
   display: flex;

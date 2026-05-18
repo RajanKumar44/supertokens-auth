@@ -147,6 +147,32 @@ function initSuperTokens() {
       Session.init({
         cookieDomain: undefined,
         cookieSecure: false,
+        // Expose the access token (JWT) to the frontend via response headers
+        // This allows other microservices to verify the token
+        exposeAccessTokenToFrontendInCookieBasedAuth: true,
+        override: {
+          functions: (originalImplementation) => {
+            return {
+              ...originalImplementation,
+              // Add custom claims to every new JWT session
+              createNewSession: async function (input) {
+                // Attach user's email to the JWT payload
+                // This way, any microservice that reads the JWT
+                // can know the user's email without calling the database
+                let userInfo = await supertokens.getUser(input.userId);
+                if (userInfo) {
+                  input.accessTokenPayload = {
+                    ...input.accessTokenPayload,
+                    email: userInfo.emails[0],
+                    role: "user", // Default role
+                    iss: process.env.APP_NAME || "SuperTokens Auth App",
+                  };
+                }
+                return originalImplementation.createNewSession(input);
+              },
+            };
+          },
+        },
       }),
 
       Dashboard.init(),
